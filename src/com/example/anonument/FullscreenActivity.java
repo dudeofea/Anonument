@@ -20,11 +20,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- * 
- * @see SystemUiHider
+/*
+ * Main screen, shows title and button choices
  */
 public class FullscreenActivity extends Activity {
 

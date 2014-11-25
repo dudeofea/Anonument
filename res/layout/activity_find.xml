@@ -26,5 +26,10 @@
          This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows.
     -->
+    
+    <com.example.anonument.NearbyCompassView
+        android:id="@+id/nearbyMonuments"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
 
 </FrameLayout>

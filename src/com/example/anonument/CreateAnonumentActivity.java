@@ -49,10 +49,7 @@ import android.widget.Toast;
 import android.support.v4.app.NavUtils;
 
 /**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- * 
- * @see SystemUiHider
+ * Activity to create an anonymous monument with a title, mood, location and first comment
  */
 public class CreateAnonumentActivity extends Activity implements LocationListener {
 	

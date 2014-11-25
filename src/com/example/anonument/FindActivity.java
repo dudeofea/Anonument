@@ -23,6 +23,9 @@ import com.example.anonument.util.SystemUiHider;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.OvalShape;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.Location;
@@ -35,14 +38,12 @@ import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.MenuItem;
+import android.view.Window;
 import android.widget.Toast;
 import android.support.v4.app.NavUtils;
 
 /**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- * 
- * @see SystemUiHider
+ * An activity to find nearby monuments and open the comment threads
  */
 public class FindActivity extends Activity implements LocationListener {
 	
@@ -52,6 +53,9 @@ public class FindActivity extends Activity implements LocationListener {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		//Remove title bar
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
 		setContentView(R.layout.activity_find);
 	}
@@ -87,15 +91,18 @@ public class FindActivity extends Activity implements LocationListener {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        new HttpPostTask(getApplicationContext()).execute(httppost);
+        NearbyCompassView ncv = (NearbyCompassView)findViewById(R.id.nearbyMonuments);
+        new UpdateMonuments(getApplicationContext(), ncv).execute(httppost);
 	}
 	
 	//Async Class to Send a POST request
-	class HttpPostTask extends AsyncTask<HttpPost, Void, HttpResponse> {
+	class UpdateMonuments extends AsyncTask<HttpPost, Void, HttpResponse> {
 		
 		private Context mContext;
-	    public HttpPostTask (Context context){
+		final private NearbyCompassView ncv;
+	    public UpdateMonuments (Context context, NearbyCompassView ncv){
 	         mContext = context;
+	         this.ncv = ncv;
 	    }
 
 		@Override
@@ -126,21 +133,30 @@ public class FindActivity extends Activity implements LocationListener {
 		
 		@Override
 		protected void onPostExecute(HttpResponse result){
-			if(result != null){
-				if(result.getStatusLine().getStatusCode()==HttpStatus.SC_OK)
-		        {
-					String responseBody;
-					try {
-						responseBody = EntityUtils.toString(result.getEntity());
-						debug(responseBody);
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-		        }
+			if(result != null && result.getStatusLine().getStatusCode()==HttpStatus.SC_OK)
+	        {
+				String responseBody;
+				try {
+					responseBody = EntityUtils.toString(result.getEntity());
+					//debug(responseBody);
+					//Create new array of monuments
+			        final Monument[] monuments = Monument.fromJSON(responseBody);
+			        for(int i = 0; i < monuments.length; i++){
+			        	debug(monuments[i].title);
+			        }
+			        //update view with new monuments
+					runOnUiThread(new Runnable() {
+					    public void run() {
+					    	ncv.setNearby(monuments);
+					    }
+					});
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 	}
