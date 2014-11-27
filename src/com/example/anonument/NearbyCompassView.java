@@ -28,7 +28,10 @@ public class NearbyCompassView extends View {
 	}
 	private void init(){
 		monuments = new Monument[0];
-		border_p.setColor(Color.BLACK);
+		int c = Color.parseColor("#33b5e5");
+		border_p.setColor(c);
+		border_p.setStyle(Paint.Style.STROKE);
+		border_p.setStrokeWidth(5.0f);
 	}
 	public NearbyCompassView(Context context) {
 		super(context);
@@ -43,12 +46,19 @@ public class NearbyCompassView extends View {
 		init();
 	}
 	protected void onDraw(Canvas canvas) {
+		int cy = canvas.getHeight()/2;
+		int cx = canvas.getWidth()/2;
+		int rad = cx-20;
+		canvas.drawCircle(cx, cy, rad, border_p);
 		for(int i = 0; i < monuments.length; i++){
-			float pos_x = 50f;
-			float pos_y = i*50f;
-			fill_p.setColor(monuments[i].mood_color);
-			canvas.drawCircle(pos_x, pos_y, 13f, border_p);
-			canvas.drawCircle(pos_x, pos_y, 9f, fill_p);
+			this.drawMonumentIcon(canvas, monuments[i], i*20, cx, cy, rad);
 		}
+	}
+	private void drawMonumentIcon(Canvas canvas, Monument m, double bearing, int cx, int cy, int rad){
+		float pos_x = rad*((float)Math.sin(Math.PI*bearing/180)) + cx;
+		float pos_y = -rad*((float)Math.cos(Math.PI*bearing/180)) + cy;
+		fill_p.setColor(m.mood_color);
+		canvas.drawCircle(pos_x, pos_y, 13f, border_p);
+		canvas.drawCircle(pos_x, pos_y, 11f, fill_p);
 	}
 }
