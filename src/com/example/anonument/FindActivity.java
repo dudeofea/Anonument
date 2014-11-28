@@ -27,6 +27,8 @@ import android.graphics.Canvas;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -49,6 +51,67 @@ public class FindActivity extends Activity implements LocationListener {
 	
 	private LocationManager locationManager;
 	private Location loc = null;
+	private SensorManager sensorManager;
+	float[] aValues = new float[3];
+	float[] mValues = new float[3];
+    private float bearing = 0;
+    private float _oldBearing = 0;
+    private int jitter_count = 0;
+    
+    private float[] calculateOrientation() {
+		float[] values = new float[3];
+		float[] R = new float[9];
+		float[] outR = new float[9];
+		
+		SensorManager.getRotationMatrix(R, null, aValues, mValues);
+		SensorManager.remapCoordinateSystem(R, 
+		                                    SensorManager.AXIS_X, 
+		                                    SensorManager.AXIS_Z, 
+		                                    outR);
+		
+		SensorManager.getOrientation(outR, values);
+		
+		// Convert from Radians to Degrees.
+		    values[0] = (float) Math.toDegrees(values[0]);
+		    values[1] = (float) Math.toDegrees(values[1]);
+		    values[2] = (float) Math.toDegrees(values[2]);
+		
+		    return values;
+	}
+    
+    private float angularDistance(float a, float b){
+    	//make sure b > a
+    	if(b < a){
+    		float tmp = a;
+    		a = b;
+    		b = tmp;
+    	}
+    	float dist1 = Math.abs(b-a);
+    	float dist2 = Math.abs(360-b+a);
+    	return Math.min(dist1, dist2);
+    }
+    
+    private final SensorEventListener sensorEventListener = new SensorEventListener() {
+        public void onSensorChanged(SensorEvent event) {
+          if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+            aValues = event.values;
+          if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+            mValues = event.values;
+
+          bearing = 180 + calculateOrientation()[0];
+          //low pass filter
+          float damping = 0.95f;
+          if(jitter_count < 5 && angularDistance(_oldBearing, bearing) > 25){ return; }	//remove jitter
+          jitter_count = 0;
+          //TODO: LPF using similar function to angularDistance
+          bearing = (1-damping) * bearing + (damping) * _oldBearing;
+          _oldBearing = bearing;
+          NearbyCompassView ncv = (NearbyCompassView)findViewById(R.id.nearbyMonuments);
+          ncv.setBearing(bearing);
+        }
+
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {}		
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -67,8 +130,19 @@ public class FindActivity extends Activity implements LocationListener {
 	   	//Setup GPS
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		locationManager.requestLocationUpdates( LocationManager.GPS_PROVIDER,
-	            3000,   // 3 sec
+	            1000,   // 1 sec
 	            10, this);
+		//Setup Heading
+		sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+		Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+		Sensor magField = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		
+		sensorManager.registerListener(sensorEventListener, 
+		                                 accelerometer, 
+		                                 SensorManager.SENSOR_DELAY_GAME);
+		sensorManager.registerListener(sensorEventListener, 
+		                                 magField,
+		                                 SensorManager.SENSOR_DELAY_GAME);
    	}
 
 	@Override
@@ -80,7 +154,7 @@ public class FindActivity extends Activity implements LocationListener {
 	public void onLocationChanged(Location location) {
 		loc = location;
 		// Send POST request to server
-	    HttpPost httppost = new HttpPost("http://192.168.1.10:81/hackathon/get_nearby");
+	    HttpPost httppost = new HttpPost(getString(R.string.server_ip)+"/hackathon/get_nearby");
         // Add the data
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
         nameValuePairs.add(new BasicNameValuePair("lat", String.valueOf(loc.getLatitude())));
@@ -92,6 +166,7 @@ public class FindActivity extends Activity implements LocationListener {
 			e.printStackTrace();
 		}
         NearbyCompassView ncv = (NearbyCompassView)findViewById(R.id.nearbyMonuments);
+        ncv.setLocation(location);
         new UpdateMonuments(getApplicationContext(), ncv).execute(httppost);
 	}
 	
@@ -141,9 +216,6 @@ public class FindActivity extends Activity implements LocationListener {
 					//debug(responseBody);
 					//Create new array of monuments
 			        final Monument[] monuments = Monument.fromJSON(responseBody);
-			        for(int i = 0; i < monuments.length; i++){
-			        	debug(monuments[i].title);
-			        }
 			        //update view with new monuments
 					runOnUiThread(new Runnable() {
 					    public void run() {

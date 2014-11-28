@@ -236,7 +236,7 @@ public class CreateAnonumentActivity extends Activity implements LocationListene
 		EditText title = (EditText) findViewById(R.id.title);
 		EditText comment = (EditText) findViewById(R.id.comment);
 	    // Send POST request to server
-	    HttpPost httppost = new HttpPost("http://192.168.1.10:81/hackathon/create_anonument");
+	    HttpPost httppost = new HttpPost(getString(R.string.server_ip)+"/hackathon/create_anonument");
         // Add the data
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(6);
         nameValuePairs.add(new BasicNameValuePair("mood", mood_string));
