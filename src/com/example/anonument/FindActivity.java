@@ -19,13 +19,17 @@ import org.apache.http.util.EntityUtils;
 
 import com.example.anonument.CreateAnonumentActivity.HttpPostTask;
 import com.example.anonument.util.SystemUiHider;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -34,9 +38,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.MenuItem;
@@ -47,7 +51,13 @@ import android.support.v4.app.NavUtils;
 /**
  * An activity to find nearby monuments and open the comment threads
  */
-public class FindActivity extends Activity implements LocationListener {
+public class FindActivity extends Activity implements com.google.android.gms.location.LocationListener, ConnectionCallbacks, OnConnectionFailedListener {
+	
+	private static final String TAG = FindActivity.class.getSimpleName();
+	private ConnectionCallbacks mConnectionCallbacks;
+	private GoogleApiClient mApiClient;
+	private com.google.android.gms.location.LocationListener mContext = this;
+	static final int REQUEST_CODE_RECOVER_PLAY_SERVICES = 1001;
 	
 	private LocationManager locationManager;
 	private Location loc = null;
@@ -125,36 +135,70 @@ public class FindActivity extends Activity implements LocationListener {
 	
 	@Override
    	protected void onResume() {
-   	  super.onResume();
+		super.onResume();
 
-	   	//Setup GPS
-		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		locationManager.requestLocationUpdates( LocationManager.GPS_PROVIDER,
-	            1000,   // 1 sec
-	            10, this);
-		//Setup Heading
-		sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
-		Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-		Sensor magField = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+		//--- Setup GPS ---
+		//Check for Google Play Services
+		int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+		if(resultCode != ConnectionResult.SUCCESS){
+			//error
+			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+				GooglePlayServicesUtil.getErrorDialog(resultCode, this, 
+					      REQUEST_CODE_RECOVER_PLAY_SERVICES).show();
+		    } else {
+		      Toast.makeText(this, "This device is not supported.", 
+		          Toast.LENGTH_LONG).show();
+		      finish();
+		    }
+		}
 		
-		sensorManager.registerListener(sensorEventListener, 
+		mApiClient = new GoogleApiClient.Builder(this)
+			.addConnectionCallbacks(this)
+			.addOnConnectionFailedListener(this)
+			.addApi(LocationServices.API)
+			.build();
+		mApiClient.connect();
+		
+		
+   	  //Setup Heading
+   	  sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+   	  Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+   	  Sensor magField = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+   	  sensorManager.registerListener(sensorEventListener, 
 		                                 accelerometer, 
 		                                 SensorManager.SENSOR_DELAY_GAME);
-		sensorManager.registerListener(sensorEventListener, 
+   	  sensorManager.registerListener(sensorEventListener, 
 		                                 magField,
 		                                 SensorManager.SENSOR_DELAY_GAME);
    	}
+	
+	@Override
+	public void onConnected(Bundle connectionHint) {
+		Log.d(TAG, "onConnected");
+		LocationRequest mLocationRequest = new LocationRequest();
+		mLocationRequest.setInterval(7000);
+		mLocationRequest.setFastestInterval(2000);
+		mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+		
+		LocationServices.FusedLocationApi.requestLocationUpdates(
+	            mApiClient, mLocationRequest, this);
+	}
 
 	@Override
-	protected void onPostCreate(Bundle savedInstanceState) {
-		super.onPostCreate(savedInstanceState);
+	public void onConnectionSuspended(int arg0) {
+		Log.d(TAG, "onConnectionSuspended");
+	}
+	
+	@Override
+	public void onConnectionFailed(ConnectionResult arg0) {
+		Log.d(TAG, "onConnectionFailed");
 	}
 
 	@Override
 	public void onLocationChanged(Location location) {
 		loc = location;
 		// Send POST request to server
-	    HttpPost httppost = new HttpPost(getString(R.string.server_ip)+"/hackathon/get_nearby");
+	    HttpPost httppost = new HttpPost(getString(R.string.server_ip_local)+"/hackathon/get_nearby");
         // Add the data
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
         nameValuePairs.add(new BasicNameValuePair("lat", String.valueOf(loc.getLatitude())));
@@ -231,23 +275,5 @@ public class FindActivity extends Activity implements LocationListener {
 				}
 			}
 		}
-	}
-
-	@Override
-	public void onStatusChanged(String provider, int status, Bundle extras) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onProviderEnabled(String provider) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onProviderDisabled(String provider) {
-		// TODO Auto-generated method stub
-		
 	}
 }
