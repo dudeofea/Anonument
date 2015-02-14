@@ -45,11 +45,22 @@
             android:name=".FindActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_find"
+            android:screenOrientation="portrait"
             android:parentActivityName=".FullscreenActivity"
             android:theme="@style/FullscreenTheme" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.anonument.FullscreenActivity" />
+        </activity>
+        <activity
+            android:name=".CommentActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".CommentActivity"
+            android:theme="@style/FullscreenTheme" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.anonument.FindActivity" />
         </activity>
     </application>
 

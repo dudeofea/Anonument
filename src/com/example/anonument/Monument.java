@@ -17,10 +17,14 @@ public class Monument {
 	public Location loc = null;
 	public int mood_color;
 	public String title;
-	public Monument(Location loc, int mood_color, String title){
+	public float bearing;
+	public float dist;
+	public int id = 0;
+	public Monument(Location loc, int mood_color, String title, int id){
 		this.loc = loc;
 		this.mood_color = mood_color;
 		this.title = title;
+		this.id = id;
 	}
 	static public Monument[] fromJSON(String json){
 		JSONObject ms = null;
@@ -38,7 +42,7 @@ public class Monument {
 				l.setLongitude(Double.parseDouble(jm.getString("lon")));
 				//get color from hex
 				int c = Color.parseColor("#"+jm.getString("mood"));
-				mv.add(new Monument(l, c, jm.getString("title")));
+				mv.add(new Monument(l, c, jm.getString("title"), jm.getInt("id")));
 			}
 			return mv.toArray(new Monument[mv.size()]);
 		} catch (JSONException e) {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -29,7 +30,10 @@ import com.google.android.gms.location.LocationServices;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -45,6 +49,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.MenuItem;
 import android.view.Window;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v4.app.NavUtils;
 
@@ -67,6 +73,8 @@ public class FindActivity extends Activity implements com.google.android.gms.loc
     private float bearing = 0;
     private float _oldBearing = 0;
     private int jitter_count = 0;
+    
+    private Monument[] nearby = null;
     
     private float[] calculateOrientation() {
 		float[] values = new float[3];
@@ -116,8 +124,8 @@ public class FindActivity extends Activity implements com.google.android.gms.loc
           //TODO: LPF using similar function to angularDistance
           bearing = (1-damping) * bearing + (damping) * _oldBearing;
           _oldBearing = bearing;
-          NearbyCompassView ncv = (NearbyCompassView)findViewById(R.id.nearbyMonuments);
-          ncv.setBearing(bearing);
+          //NearbyCompassView ncv = (NearbyCompassView)findViewById(R.id.nearbyMonuments);
+          //ncv.setBearing(bearing);
         }
 
         public void onAccuracyChanged(Sensor sensor, int accuracy) {}		
@@ -172,12 +180,41 @@ public class FindActivity extends Activity implements com.google.android.gms.loc
 		                                 SensorManager.SENSOR_DELAY_GAME);
    	}
 	
+	//load comments of a nearby monument
+	public void load_comments(View view) {
+		if(nearby == null){
+			return;
+		}
+		final Intent intent = new Intent(this, CommentActivity.class);
+		if(nearby.length == 1){
+			//Open comments for monument
+			intent.putExtra("monument_id", nearby[0].id);
+   			startActivity(intent);
+		}else if(nearby.length > 1){
+			//Open choice dialog
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			String[] names = new String[nearby.length];
+			for(int i = 0; i < nearby.length; i++){
+				names[i] = nearby[i].title + " (" + String.valueOf(Math.round(nearby[i].dist*10.0)/10.0) + "m)";
+			}
+			builder.setTitle("Which did you mean?")
+			       .setItems(names, new DialogInterface.OnClickListener() {
+			           public void onClick(DialogInterface dialog, int i) {
+				   			intent.putExtra("monument_id", nearby[i].id);
+				   			startActivity(intent);
+			       }
+			});
+			AlertDialog choicePopup = builder.create();
+	   		choicePopup.show();
+		}
+	}
+	
 	@Override
 	public void onConnected(Bundle connectionHint) {
 		Log.d(TAG, "onConnected");
 		LocationRequest mLocationRequest = new LocationRequest();
-		mLocationRequest.setInterval(7000);
-		mLocationRequest.setFastestInterval(2000);
+		mLocationRequest.setInterval(2000);
+		mLocationRequest.setFastestInterval(500);
 		mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 		
 		LocationServices.FusedLocationApi.requestLocationUpdates(
@@ -198,7 +235,7 @@ public class FindActivity extends Activity implements com.google.android.gms.loc
 	public void onLocationChanged(Location location) {
 		loc = location;
 		// Send POST request to server
-	    HttpPost httppost = new HttpPost(getString(R.string.server_ip_local)+"/hackathon/get_nearby");
+	    HttpPost httppost = new HttpPost(getString(R.string.server_ip)+"/hackathon/get_nearby");
         // Add the data
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
         nameValuePairs.add(new BasicNameValuePair("lat", String.valueOf(loc.getLatitude())));
@@ -209,9 +246,32 @@ public class FindActivity extends Activity implements com.google.android.gms.loc
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+        //update Nearby Compass View
         NearbyCompassView ncv = (NearbyCompassView)findViewById(R.id.nearbyMonuments);
         ncv.setLocation(location);
+        ncv.setBearing(location.getBearing());
         new UpdateMonuments(getApplicationContext(), ncv).execute(httppost);
+        //check if some locations can be commented on
+        Vector<Monument> can_comment = new Vector<Monument>();
+        for(int i = 0; i < ncv.monuments.length; i++){
+        	if(ncv.monuments[i].dist < 800){
+        		can_comment.add(ncv.monuments[i]);
+        	}
+        }
+        nearby = can_comment.toArray(new Monument[can_comment.size()]);
+        Button commentButton = (Button) findViewById(R.id.comment_button);
+        TextView bottomlabel = (TextView) findViewById(R.id.message);
+        if(nearby.length > 0){
+        	//show button to comment
+			commentButton.setVisibility(View.VISIBLE);
+			//hide bottom label
+			bottomlabel.setVisibility(View.GONE);
+        }else{
+        	//hide button to comment
+			commentButton.setVisibility(View.GONE);
+			//show bottom label
+			bottomlabel.setVisibility(View.VISIBLE);
+        }
 	}
 	
 	//Async Class to Send a POST request
@@ -264,6 +324,14 @@ public class FindActivity extends Activity implements com.google.android.gms.loc
 					runOnUiThread(new Runnable() {
 					    public void run() {
 					    	ncv.setNearby(monuments);
+					    	TextView label = (TextView) findViewById(R.id.debug);
+							if(monuments.length > 0){
+								//set middle label
+								label.setText(String.valueOf(monuments.length)+" nearby monuments");
+							}else{
+								//set middle label
+								label.setText(String.valueOf("no nearby monuments :("));
+							}
 					    }
 					});
 				} catch (ParseException e) {

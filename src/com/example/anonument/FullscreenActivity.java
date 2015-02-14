@@ -46,10 +46,10 @@ public class FullscreenActivity extends Activity {
 	}
 	
 	//Finding nearby monuments
-		public void find_nearby(View view) {
-			Intent intent = new Intent(this, FindActivity.class);
-			startActivity(intent);
-		}
+	public void find_nearby(View view) {
+		Intent intent = new Intent(this, FindActivity.class);
+		startActivity(intent);
+	}
 
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
