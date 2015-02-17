@@ -35,6 +35,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -53,9 +54,10 @@ import android.support.v4.app.NavUtils;
  */
 public class CommentActivity extends Activity {
 	
-	private int mood_color;
-	private Location loc = null;
-	private float hue, sat;
+	private static final String TAG = FindActivity.class.getSimpleName();
+	int monument_id = 0;
+	int monument_color = 0;
+	String monument_title = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +68,42 @@ public class CommentActivity extends Activity {
 
 		//attach to layout
 		setContentView(R.layout.activity_comment);
+		
+		//get monument info
+		if (savedInstanceState == null) {
+		    Bundle extras = getIntent().getExtras();
+		    if(extras != null) {
+		        monument_id = extras.getInt("monument_id");
+		        monument_color = extras.getInt("monument_color");
+		        monument_title = extras.getString("monument_title");
+		    }
+		} else {
+		    monument_id = (Integer) savedInstanceState.getSerializable("monument_id");
+		    monument_color = (Integer) savedInstanceState.getSerializable("monument_color");
+		    monument_title = (String) savedInstanceState.getSerializable("monument_title");
+		}
+		
+		//Set the mood
+		View root = findViewById(R.id.background);
+		root.setBackgroundColor(monument_color);
+		
+		TextView title = (TextView) findViewById(R.id.mtitle);
+		float[] hsv = new float[3];
+		Color.colorToHSV(monument_color, hsv);
+		hsv[1] = Math.max(hsv[1]-0.04f, 0.0f);
+		hsv[2] = 1f;
+		int text_color = Color.HSVToColor(hsv);
+		title.setTextColor(text_color);
+		
+		//Set the title
+		title.setText(monument_title);
+	}
+	
+	//Left-right animation on back button
+	@Override
+	public void onBackPressed() {
+	    super.onBackPressed();
+	    overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
 	}
 	
 	@Override

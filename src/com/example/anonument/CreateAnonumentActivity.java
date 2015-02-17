@@ -198,7 +198,7 @@ public class CreateAnonumentActivity extends Activity implements LocationListene
 		root.setBackgroundColor(mood_color);
 		
 		int text_color = Color.HSVToColor(new float[]{hue/2, Math.max(sat-0.4f, 0.0f)/100, 1f});
-		TextView textview = (TextView) findViewById(R.id.create);
+		TextView textview = (TextView) findViewById(R.id.mtitle);
 		textview.setTextColor(text_color);
 	}
 	
@@ -209,7 +209,7 @@ public class CreateAnonumentActivity extends Activity implements LocationListene
 		root.setBackgroundColor(mood_color);
 		
 		int text_color = Color.HSVToColor(new float[]{hue/2, Math.max(sat-0.4f, 0.0f)/100, 1f});
-		TextView textview = (TextView) findViewById(R.id.create);
+		TextView textview = (TextView) findViewById(R.id.mtitle);
 		textview.setTextColor(text_color);
 	}
 	

@@ -185,11 +185,15 @@ public class FindActivity extends Activity implements com.google.android.gms.loc
 		if(nearby == null){
 			return;
 		}
-		final Intent intent = new Intent(this, CommentActivity.class);
+		final Context me = this;
 		if(nearby.length == 1){
 			//Open comments for monument
+			Intent intent = new Intent(me, CommentActivity.class);
 			intent.putExtra("monument_id", nearby[0].id);
+			intent.putExtra("monument_title", nearby[0].title);
+			intent.putExtra("monument_color", nearby[0].mood_color);
    			startActivity(intent);
+   			overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
 		}else if(nearby.length > 1){
 			//Open choice dialog
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -200,8 +204,12 @@ public class FindActivity extends Activity implements com.google.android.gms.loc
 			builder.setTitle("Which did you mean?")
 			       .setItems(names, new DialogInterface.OnClickListener() {
 			           public void onClick(DialogInterface dialog, int i) {
+			        	   	Intent intent = new Intent(me, CommentActivity.class);
 				   			intent.putExtra("monument_id", nearby[i].id);
+				   			intent.putExtra("monument_title", nearby[i].title);
+							intent.putExtra("monument_color", nearby[i].mood_color);
 				   			startActivity(intent);
+				   			overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
 			       }
 			});
 			AlertDialog choicePopup = builder.create();

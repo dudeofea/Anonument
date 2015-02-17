@@ -3,7 +3,7 @@
     android:id="@+id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0099cc"
+    android:background="#EEEEEE"
     tools:context="com.example.anonument.CreateAnonumentActivity" >
 
     <!--
@@ -13,94 +13,20 @@
     -->
 
     <TextView
-        android:id="@+id/create"
+        android:id="@+id/mtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:gravity="center"
         android:keepScreenOn="true"
-        android:text="COMMENT"
-        android:textColor="#33b5e5"
-        android:textSize="30sp"
+        android:text="Ceci n&apos;est pas un titre"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
         android:textStyle="bold" />
 
     <!--
          This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows.
     -->
-
-    <EditText
-        android:id="@+id/title"
-        style="@style/AppTheme"
-        android:layout_width="275dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="70dp"
-        android:background="@drawable/apptheme_textfield_activated_holo_dark"
-        android:ems="10"
-        android:hint="Title"
-        android:lines="1"
-        android:maxLength="40"
-        android:maxLines="1"
-        android:singleLine="true"
-        android:inputType="textCapSentences"
-        android:textColor="#FFF"
-        android:textColorHint="#DDD"
-        android:textSize="18sp" />
-
-    <Button
-        android:id="@+id/postButton"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="-5dp"
-        android:layout_marginLeft="-5dp"
-        android:layout_marginRight="-5dp"
-        android:enabled="false"
-        android:height="60dp"
-        android:onClick="send_post_request"
-        android:text="POST" />
-
-    <TextView
-        android:id="@+id/gpsLabel"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="370dp"
-        android:gravity="center_horizontal"
-        android:text="Waiting For Location"
-        android:textColor="#DDD"
-        android:textSize="18sp" />
-
-    <EditText
-        android:id="@+id/comment"
-        style="@style/AppTheme"
-        android:layout_width="275dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="260dp"
-        android:background="@drawable/apptheme_textfield_activated_holo_dark"
-        android:ems="10"
-        android:gravity="left"
-        android:hint="First Comment"
-        android:maxLength="300"
-        android:maxLines="4"
-        android:scrollHorizontally="false"
-        android:textColor="#FFF"
-        android:textColorHint="#DDD"
-        android:textSize="18sp" >
-
-        <requestFocus />
-    </EditText>
-
-    <TextView
-        android:id="@+id/moodLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="24dp"
-        android:layout_marginTop="140dp"
-        android:text="Mood"
-        android:textColor="#DDD"
-        android:textSize="18sp" />
 
 </FrameLayout>
