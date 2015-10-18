@@ -83,15 +83,43 @@ public class FindActivity extends AppCompatActivity
         return Math.min(dist1, dist2);
     }
 
-    private void updateBearingWithAcc(float[] acc){
-        bearing = acc[0];
+    float[] old_acc = {0, 0, 0};
+    float[] spd =     {0, 0, 0};
+    float[] old_spd = {0, 0, 0};
+    float[] pos =     {0, 0, 0};
+    long last_timestamp = 0;
+    static final float NS2S = 1.0f / 1000000000.0f; //nanoseconds per second
+    //use accelerometer to update bearing approximately
+    private void updateBearingWithAcc(SensorEvent event){
+        //get rid of initial drift
+        if(last_timestamp == 0){
+            last_timestamp = event.timestamp;
+            return;
+        }
+        float[] acc = event.values;
+        float dt = (event.timestamp - last_timestamp) * NS2S;
+        //get estimated x position (side to side)
+        for (int i = 0; i < spd.length; i++) {
+            spd[i] += (acc[i] + old_acc[i])/2 * dt;  //speed is acceleration integral
+            pos[i] += (spd[i] + old_spd[i])/2 * dt;  //position is speed integral
+            old_spd[i] = spd[i];
+            old_acc[i] = acc[i];
+        }
+        last_timestamp = event.timestamp;
+
+        TextView acc1 = (TextView)findViewById(R.id.acc1);
+        TextView acc2 = (TextView)findViewById(R.id.acc2);
+        TextView acc3 = (TextView)findViewById(R.id.acc3);
+        acc1.setText(String.valueOf(acc[0]));
+        acc2.setText(String.valueOf(spd[1]));
+        acc3.setText(String.valueOf(pos[2]));
     }
 
     //update bearings on sensor update
     private final SensorEventListener sensorEventListener = new SensorEventListener() {
         public void onSensorChanged(SensorEvent event) {
             if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
-                updateBearingWithAcc(event.values);
+                updateBearingWithAcc(event);
 
             //TODO: get bearing with lat/lon diff, update with accelerometer
 
