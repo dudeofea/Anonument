@@ -100,7 +100,15 @@ public class FindActivity extends AppCompatActivity
         float dt = (event.timestamp - last_timestamp) * NS2S;
         //get estimated x position (side to side)
         for (int i = 0; i < spd.length; i++) {
+            //high pass filter acceleration
+            acc[i] = (0.5f) * acc[i] - (0.5f) * old_acc[i];
+            //if(Math.abs(acc[i]) < 0.1){ acc[i] = 0.0f; }
+            //integrate for speed
             spd[i] += (acc[i] + old_acc[i])/2 * dt;  //speed is acceleration integral
+            //drag speed to settle at 0
+            spd[i] *= 0.8;
+            if(Math.abs(spd[i]) < 0.005){ spd[i] = 0; }
+            //integrate for position
             pos[i] += (spd[i] + old_spd[i])/2 * dt;  //position is speed integral
             old_spd[i] = spd[i];
             old_acc[i] = acc[i];
@@ -110,9 +118,9 @@ public class FindActivity extends AppCompatActivity
         TextView acc1 = (TextView)findViewById(R.id.acc1);
         TextView acc2 = (TextView)findViewById(R.id.acc2);
         TextView acc3 = (TextView)findViewById(R.id.acc3);
-        acc1.setText(String.valueOf(acc[0]));
-        acc2.setText(String.valueOf(spd[1]));
-        acc3.setText(String.valueOf(pos[2]));
+        acc1.setText(String.format("%.2f", acc[0]));
+        acc2.setText(String.format("%.2f", spd[0]));
+        acc3.setText(String.format("%.2f", pos[0]));
     }
 
     //update bearings on sensor update
