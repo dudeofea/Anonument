@@ -92,22 +92,18 @@ public class FindActivity extends AppCompatActivity
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
         if(resultCode != ConnectionResult.SUCCESS){
             //error
-            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-                GooglePlayServicesUtil.getErrorDialog(resultCode, this,
-                        REQUEST_CODE_RECOVER_PLAY_SERVICES).show();
-            } else {
-                Toast.makeText(this, "This device is not supported.",
-                        Toast.LENGTH_LONG).show();
-                finish();
-            }
+            Toast.makeText(this, "This device is not supported.",
+                    Toast.LENGTH_LONG).show();
+            finish();
+        }else{
+            //good
+            mApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+            mApiClient.connect();
         }
-
-        mApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-        mApiClient.connect();
     }
 
     //load comments of a nearby monument
