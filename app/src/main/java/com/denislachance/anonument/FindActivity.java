@@ -65,8 +65,8 @@ public class FindActivity extends AppCompatActivity
     static final int REQUEST_CODE_RECOVER_PLAY_SERVICES = 1001;
 
     private LocationManager locationManager;
-    private Location loc = null;
     private SensorManager sensorManager;
+    Location loc = null;
     float bearing = 0, _oldBearing = 0;
     Monument[] nearby;
 
@@ -165,11 +165,23 @@ public class FindActivity extends AppCompatActivity
         Log.d(TAG, "onConnectionFailed");
     }
 
+    public float getNewBearing(Location new_loc){
+        if(loc == null){
+            return 0;
+        }
+        return loc.bearingTo(new_loc);
+    }
+
     @Override
-    public void onLocationChanged(Location location) {
-        loc = location;
+    public void onLocationChanged(Location new_loc) {
+        //wait until location has changed enough / is accurate
+        if(loc != null && (loc.distanceTo(new_loc) < 2.0 || loc.getAccuracy() > 10.0)){
+            return;
+        }
+        bearing = getNewBearing(new_loc);
+        loc = new_loc;
         // Send POST request to server
-        HttpPost httppost = new HttpPost(getString(R.string.server_ip_local)+"/hackathon/get_nearby");
+        HttpPost httppost = new HttpPost(getString(R.string.server_ip)+"/hackathon/get_nearby");
         // Add the data
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
         nameValuePairs.add(new BasicNameValuePair("lat", String.valueOf(loc.getLatitude())));
@@ -182,8 +194,8 @@ public class FindActivity extends AppCompatActivity
         }
         //update Nearby Compass View
         NearbyCompassView ncv = (NearbyCompassView)findViewById(R.id.nearbyMonuments);
-        ncv.setLocation(location);
-        ncv.setBearing(location.getBearing());
+        ncv.setLocation(new_loc);
+        ncv.setBearing(bearing);
         new UpdateMonuments(getApplicationContext(), ncv).execute(httppost);
         //check if some locations can be commented on
         Vector<Monument> can_comment = new Vector<Monument>();
