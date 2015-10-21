@@ -83,68 +83,6 @@ public class FindActivity extends AppCompatActivity
         return Math.min(dist1, dist2);
     }
 
-    float[] old_acc = {0, 0, 0};
-    float[] spd =     {0, 0, 0};
-    float[] old_spd = {0, 0, 0};
-    float[] pos =     {0, 0, 0};
-    long last_timestamp = 0;
-    static final float NS2S = 1.0f / 1000000000.0f; //nanoseconds per second
-    //use accelerometer to update bearing approximately
-    private void updateBearingWithAcc(SensorEvent event){
-        //get rid of initial drift
-        if(last_timestamp == 0){
-            last_timestamp = event.timestamp;
-            return;
-        }
-        float[] acc = event.values;
-        float dt = (event.timestamp - last_timestamp) * NS2S;
-        //get estimated x position (side to side)
-        for (int i = 0; i < spd.length; i++) {
-            //high pass filter acceleration
-            acc[i] = (0.5f) * acc[i] - (0.5f) * old_acc[i];
-            //if(Math.abs(acc[i]) < 0.1){ acc[i] = 0.0f; }
-            //integrate for speed
-            spd[i] += (acc[i] + old_acc[i])/2 * dt;  //speed is acceleration integral
-            //drag speed to settle at 0
-            spd[i] *= 0.8;
-            if(Math.abs(spd[i]) < 0.005){ spd[i] = 0; }
-            //integrate for position
-            pos[i] += (spd[i] + old_spd[i])/2 * dt;  //position is speed integral
-            old_spd[i] = spd[i];
-            old_acc[i] = acc[i];
-        }
-        last_timestamp = event.timestamp;
-
-        TextView acc1 = (TextView)findViewById(R.id.acc1);
-        TextView acc2 = (TextView)findViewById(R.id.acc2);
-        TextView acc3 = (TextView)findViewById(R.id.acc3);
-        acc1.setText(String.format("%.2f", acc[0]));
-        acc2.setText(String.format("%.2f", spd[0]));
-        acc3.setText(String.format("%.2f", pos[0]));
-    }
-
-    //update bearings on sensor update
-    private final SensorEventListener sensorEventListener = new SensorEventListener() {
-        public void onSensorChanged(SensorEvent event) {
-            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
-                updateBearingWithAcc(event);
-
-            //TODO: get bearing with lat/lon diff, update with accelerometer
-
-//            //low pass filter
-//            float damping = 0.95f;
-//            if(jitter_count < 5 && angularDistance(_oldBearing, bearing) > 25){ return; }	//remove jitter
-//            jitter_count = 0;
-//            //TODO: LPF using similar function to angularDistance
-//            bearing = (1-damping) * bearing + (damping) * _oldBearing;
-            _oldBearing = bearing;
-            NearbyCompassView ncv = (NearbyCompassView)findViewById(R.id.nearbyMonuments);
-            ncv.setBearing(bearing);
-        }
-
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {}
-    };
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -170,18 +108,6 @@ public class FindActivity extends AppCompatActivity
                 .addApi(LocationServices.API)
                 .build();
         mApiClient.connect();
-
-
-        //Setup Heading
-        sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
-        Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        Sensor magField = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-        sensorManager.registerListener(sensorEventListener,
-                accelerometer,
-                SensorManager.SENSOR_DELAY_GAME);
-        sensorManager.registerListener(sensorEventListener,
-                magField,
-                SensorManager.SENSOR_DELAY_GAME);
     }
 
     //load comments of a nearby monument
