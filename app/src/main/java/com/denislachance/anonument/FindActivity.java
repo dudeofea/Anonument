@@ -41,6 +41,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -87,6 +90,8 @@ public class FindActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
+        appendLog("App Resumed");
+
         //--- Setup GPS ---
         //Check for Google Play Services
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
@@ -103,6 +108,7 @@ public class FindActivity extends AppCompatActivity
                     .addApi(LocationServices.API)
                     .build();
             mApiClient.connect();
+            appendLog("Started Location Services");
         }
     }
 
@@ -165,21 +171,59 @@ public class FindActivity extends AppCompatActivity
         Log.d(TAG, "onConnectionFailed");
     }
 
-    public float getNewBearing(Location new_loc){
-        if(loc == null){
-            return 0;
+    //Helper function to log GPS to file
+    public void appendLog(String text)
+    {
+        File logFile = new File("sdcard/log.txt");
+        if (!logFile.exists())
+        {
+            try
+            {
+                logFile.createNewFile();
+            }
+            catch (IOException e)
+            {
+                //don't bother, it's a unit test
+                return;
+            }
         }
-        return loc.bearingTo(new_loc);
+        try
+        {
+            //BufferedWriter for performance, true to set append to file flag
+            BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));
+            buf.append(text);
+            buf.newLine();
+            buf.close();
+        }
+        catch (IOException e)
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    //Updates the devices position and bearing if needed
+    public int updatePosition(Location new_loc){
+        if(loc == null){
+            loc = new_loc;
+            return -1;
+        }
+        //wait until location has changed enough / is accurate
+        if(loc.distanceTo(new_loc) < 2.0 || loc.getAccuracy() > 10.0){
+            return -1;
+        }
+        bearing = loc.bearingTo(new_loc);
+        loc = new_loc;
+        return 0;
     }
 
     @Override
     public void onLocationChanged(Location new_loc) {
-        //wait until location has changed enough / is accurate
-        if(loc != null && (loc.distanceTo(new_loc) < 2.0 || loc.getAccuracy() > 10.0)){
-            return;
-        }
-        bearing = getNewBearing(new_loc);
-        loc = new_loc;
+        appendLog(String.format("GPS: (%f, %f) acc: %f", new_loc.getLatitude(), new_loc.getLongitude(), new_loc.getAccuracy()));
+        if(updatePosition(new_loc) < 0){
+            return;     //no new info
+        };
+        appendLog(String.format("Updated bearing: %f", bearing));
         // Send POST request to server
         HttpPost httppost = new HttpPost(getString(R.string.server_ip)+"/hackathon/get_nearby");
         // Add the data
