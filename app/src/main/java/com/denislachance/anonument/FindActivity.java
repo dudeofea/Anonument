@@ -205,14 +205,20 @@ public class FindActivity extends AppCompatActivity
     //Updates the devices position and bearing if needed
     public int updatePosition(Location new_loc){
         if(loc == null){
+            //System.out.println("No location");
             loc = new_loc;
             return -1;
         }
         //wait until location has changed enough / is accurate
-        if(loc.distanceTo(new_loc) < 2.0 || loc.getAccuracy() > 10.0){
+        if(new_loc.getAccuracy() > 15.0){
+            //System.out.println(String.format("Not Accurate Enough: %f", new_loc.getAccuracy()));
             return -1;
         }
-        bearing = loc.bearingTo(new_loc);
+        if(new_loc.distanceTo(loc) < 1.0) {
+            //git diSystem.out.println(String.format("Too Close: %f", new_loc.distanceTo(loc)));
+            return -1;
+        }
+        bearing = new_loc.bearingTo(loc);
         loc = new_loc;
         return 0;
     }

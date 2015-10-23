@@ -7,6 +7,11 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+
 import static junit.framework.Assert.assertEquals;
 
 @RunWith(RobolectricGradleTestRunner.class)
@@ -29,9 +34,9 @@ public class FindActivityTests {
         find.loc = l1;
         find.updatePosition(l2);
         float new_b = find.bearing;
-        //System.out.println(String.valueOf(new_b));
-        assert(new_b > 89.0);
-        assert(new_b <= 90.0);
+        System.out.println(String.valueOf(new_b));
+        assert(new_b < -89.0);
+        assert(new_b >= -90.0);
     }
 
     @Test
@@ -42,18 +47,34 @@ public class FindActivityTests {
         find.loc = l1;
         find.updatePosition(l2);
         float new_b = find.bearing;
-        //System.out.println(String.valueOf(new_b));
-        assert(new_b > 179.0);
-        assert(new_b <= 180.0);
+        System.out.println(String.valueOf(new_b));
+        assert(new_b == 0.0);
     }
 
     @Test
     public void postionUpdate1() throws Exception {
         FindActivity find = Robolectric.setupActivity(FindActivity.class);
-        //TODO: load GPS positions from file and test
-        Location[] locs = {
-                createFakeLocation()
-        };
+        //load GPS positions from file and test
+        String file_path = "../logs/test_data_oct21.csv";
+        BufferedReader br = null;
+        String line = "";
+        System.out.println("Working Directory = " +
+                System.getProperty("user.dir"));
+        try {
+            br = new BufferedReader(new FileReader(file_path));
+            while((line = br.readLine()) != null){
+                String[] l_string = line.split(",");
+                float lat, lon, acc;
+                lat = Float.parseFloat(l_string[0]);
+                lon = Float.parseFloat(l_string[1]);
+                acc = Float.parseFloat(l_string[2]);
+                Location loc = createFakeLocation(lat, lon, acc);
+                find.updatePosition(loc);
+                System.out.println(String.format("Lat: %f, Lon: %f, Acc: %s Bearing: %f", find.loc.getLatitude(), find.loc.getLongitude(), l_string[2], find.bearing));
+            }
+        } catch (FileNotFoundException e){
+            e.printStackTrace();
+        }
     }
 
 }
