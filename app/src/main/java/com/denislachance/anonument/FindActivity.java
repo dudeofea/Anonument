@@ -46,8 +46,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 
 public class FindActivity extends AppCompatActivity
@@ -174,6 +177,8 @@ public class FindActivity extends AppCompatActivity
     //Helper function to log GPS to file
     public void appendLog(String text)
     {
+        //Get date string
+        SimpleDateFormat sdf = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss.SSS] ", Locale.US);
         File logFile = new File("sdcard/log.txt");
         if (!logFile.exists())
         {
@@ -191,7 +196,7 @@ public class FindActivity extends AppCompatActivity
         {
             //BufferedWriter for performance, true to set append to file flag
             BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));
-            buf.append(text);
+            buf.append(sdf.format(new Date())+text);
             buf.newLine();
             buf.close();
         }
@@ -218,7 +223,7 @@ public class FindActivity extends AppCompatActivity
             //git diSystem.out.println(String.format("Too Close: %f", new_loc.distanceTo(loc)));
             return -1;
         }
-        bearing = new_loc.bearingTo(loc);
+        bearing = (new_loc.bearingTo(loc) + 180) % 360;
         loc = new_loc;
         return 0;
     }

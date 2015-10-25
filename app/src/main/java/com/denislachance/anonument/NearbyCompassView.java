@@ -57,7 +57,7 @@ public class NearbyCompassView extends View {
         border_p.setColor(c);
         border_p.setStyle(Paint.Style.STROKE);
         border_p.setStrokeWidth(5.0f);
-        text_p.setColor(Color.BLACK);
+        text_p.setColor(c);
         text_p.setStyle(Paint.Style.STROKE);
     }
     public NearbyCompassView(Context context) {
@@ -83,8 +83,8 @@ public class NearbyCompassView extends View {
         //Vector<Monument> new_named = new Vector<Monument>();
         //Vector<Integer> indexes = new Vector<Integer>();
         Monument[] named = monuments;
-        Vector<Monument> new_named = new Vector<Monument>();
-        Vector<Monument> no_named = new Vector<Monument>();
+        Vector<Monument> new_named = new Vector<>();
+        Vector<Monument> no_named = new Vector<>();
         int size = named.length;
         while(size > 0){
             int count = 0;
